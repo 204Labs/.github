@@ -1,10 +1,8 @@
 [![204Labs. Bringing Ideas to Life.](https://raw.githubusercontent.com/204Labs/.github/main/assets/204labs-banner.png)](https://www.204labs.com)
 
-### Independent software company based in Sharjah, United Arab Emirates.
+### Independent software company based in United Arab Emirates.
 
 We explore overlooked problems, experiment with ideas, and build useful, human-centred software.
-
-204Labs FZE is an independent software company based in Sharjah, United Arab Emirates. 204Labs creates and owns Rewizz, bAIsect, Tether, Lurniq and FlatIntel.
 
 ### Our products
 
