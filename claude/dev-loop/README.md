@@ -67,7 +67,11 @@ when cloud sessions load org marketplaces.
    `@.claude/memory/MEMORY.md`.
 5. Seed `LESSONS.md` only with lessons that have evidence.
 6. Run `python3 .claude/dev-loop/bin/verify.py --all` and open a pull request for review.
-7. Optional: a weekly cloud scheduled task that runs `/dream` (see the Lurniq example).
+7. Optional: a weekly cloud scheduled task (fresh session each run) whose prompt attaches the
+   repository, runs `guard.py --enter-readonly`, follows the `dream` skill, checks that
+   `git status --porcelain` lists only `.claude/memory/` paths, and pushes a `claude/dream-*`
+   branch. A session that attaches its repository mid-run may not load the project's hooks, so
+   keep that explicit check in the prompt.
 
 To update: change the package here, run its tests, reinstall into each project, and review the
 diff there.

@@ -18,8 +18,8 @@ Stop and ask, in one bundled message, when the work would need any of these:
 
 - a product feature, screen, copy, flow or roadmap item the approved documents do not contain;
 - a change to an acceptance criterion, requirement or approved design;
-- anything the project's own instructions reserve for the owner (read them: for Lurniq,
-  AGENTS.md and the Build Handover Section 6);
+- anything the project's own instructions reserve for the owner (read them: CLAUDE.md, AGENTS.md
+  and the documents they name, such as a handover or decision log);
 - a deployment, production data change, payment, new paid service, new data category,
   destructive action, or a change to the dev-loop safeguards.
 
