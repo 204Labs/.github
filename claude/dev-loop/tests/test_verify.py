@@ -49,8 +49,10 @@ class VerifyTest(unittest.TestCase):
         self.assertNotIn("would run unit", r.stdout)
 
     def test_blocks_after_three_failed_corrections_and_resets_on_pass(self):
-        self.repo.write("src/code", "")
-        codes = [self.verify("--only", "unit").returncode for _ in range(4)]
+        codes = []
+        for attempt in range(4):
+            self.repo.write("src/code", f"attempt {attempt}")
+            codes.append(self.verify("--only", "unit").returncode)
         self.assertEqual(codes, [1, 1, 1, 3])
         r = self.verify("--only", "unit")
         self.assertIn("STOP", r.stdout)
@@ -59,9 +61,18 @@ class VerifyTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout)
         self.assertEqual(self.verify("--only", "unit").returncode, 0)
 
+    def test_rerun_without_a_change_is_not_a_correction(self):
+        self.repo.write("src/code", "x")
+        self.verify("--only", "unit")
+        r = self.verify("--only", "unit")
+        self.assertIn("failure 1, unchanged tree; corrections left 3", r.stdout)
+        self.assertIn("not counted as a correction", r.stdout)
+        self.repo.write("src/code", "y")
+        self.assertIn("failure 2; corrections left 2", self.verify("--only", "unit").stdout)
+
     def test_ledger_is_per_objective(self):
-        self.repo.write("src/code", "")
-        for _ in range(4):
+        for attempt in range(4):
+            self.repo.write("src/code", f"attempt {attempt}")
             self.verify("--only", "unit")
         other = self.repo.run("verify.py", "--objective", "other", "--only", "unit")
         self.assertEqual(other.returncode, 1)

@@ -109,6 +109,18 @@ def added_and_removed_lines(root: Path, mb: str | None) -> tuple[list[tuple[str,
     return added, removed
 
 
+def tree_fingerprint(root: Path, mb: str | None) -> str:
+    """Hash of the change under test: diff against the base, local edits and untracked files."""
+    h = hashlib.sha256()
+    for args in (["git", "diff", "--no-color", mb or "HEAD"], ["git", "diff", "--no-color", "HEAD"]):
+        h.update(sh(args, root).encode())
+    for path in sorted(sh(["git", "ls-files", "--others", "--exclude-standard"], root).split()):
+        p = root / path
+        if p.is_file():
+            h.update(path.encode() + p.read_bytes())
+    return h.hexdigest()[:16]
+
+
 def selected(check: dict, files: list[str], ignore: list[str]) -> bool:
     if check.get("manual"):
         return False
@@ -269,10 +281,11 @@ def main(argv: list[str]) -> int:
             print(f"  would run {c['id']}: {c.get('run') or 'builtin ' + c.get('builtin', '')}")
         return 0
 
-    run_dir = gd / "runs" / time.strftime("%Y%m%d-%H%M%S")
+    run_dir = gd / "runs" / f"{time.strftime('%Y%m%d-%H%M%S')}-{os.getpid()}"
     run_dir.mkdir(parents=True, exist_ok=True)
     results = []
     waived = set(args.waive)
+    tree = tree_fingerprint(root, mb)
     for c in checks:
         log = run_dir / f"{c['id']}.log"
         log.touch()
@@ -295,22 +308,30 @@ def main(argv: list[str]) -> int:
                 run_cmd(after, root, log, 300)
 
         entry = ledger.setdefault(objective, {}).setdefault(c["id"], {"failures": 0, "resolved": 0})
-        if status == "FAIL":
+        unchanged = False
+        if status == "FAIL" and entry["failures"] and entry.get("tree") == tree:
+            # Nothing changed since the last failure: a rerun, not a correction attempt.
+            unchanged = True
+            notes = ["no change since the last failure, so this run is not counted as a correction"] + notes
+        elif status == "FAIL":
             entry["failures"] += 1
+            entry["tree"] = tree
             entry["last_failure"] = time.strftime("%Y-%m-%dT%H:%M:%S")
             entry["fingerprint"] = hashlib.sha256("\n".join(notes).encode()).hexdigest()[:12]
-            if entry["failures"] > max_corr:
-                status = "BLOCKED"
+        if status == "FAIL" and entry["failures"] > max_corr:
+            status = "BLOCKED"  # stays blocked until a person resets the ledger
         elif status == "PASS" and entry["failures"]:
             entry["resolved"] += 1
             entry["last_resolved_after"] = entry["failures"]
             entry["failures"] = 0
+            entry.pop("tree", None)
         corrections_used = max(0, entry["failures"] - 1)
         results.append({"id": c["id"], "status": status, "exit_code": rc, "seconds": round(duration, 1),
                         "command": c.get("run") or f"builtin:{c.get('builtin')}", "log": str(log),
                         "failures": entry["failures"], "corrections_used": corrections_used, "notes": notes})
         mark = {"PASS": "ok  ", "FAIL": "FAIL", "UNAVAILABLE": "n/a ", "BLOCKED": "STOP"}[status]
-        extra = f" (failure {entry['failures']}; corrections left {max(0, max_corr - corrections_used)})" if status == "FAIL" else ""
+        extra = (f" (failure {entry['failures']}{', unchanged tree' if unchanged else ''}; "
+                 f"corrections left {max(0, max_corr - corrections_used)})") if status == "FAIL" else ""
         print(f"  [{mark}] {c['id']} {round(duration, 1)}s{extra}")
         if status in ("FAIL", "BLOCKED", "UNAVAILABLE"):
             for n in notes:
