@@ -1,0 +1,17 @@
+{
+  "_comment": "Merge into the project's .claude/settings.json. Keep the project's own hooks and permissions.",
+  "permissions": {
+    "deny": [
+      "Read(**/.env)", "Read(**/.env.*)", "Read(**/.dev.vars)", "Read(**/*.jks)", "Read(**/*.keystore)",
+      "Read(**/*.p12)", "Read(**/*.pem)", "Read(**/local.properties)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {"hooks": [{"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/dev-loop/bin/guard.py\"", "timeout": 10}]}
+    ],
+    "SessionStart": [
+      {"hooks": [{"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/dev-loop/bin/memory.py\" session-start", "timeout": 10}]}
+    ]
+  }
+}

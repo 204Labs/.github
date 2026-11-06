@@ -1,0 +1,14 @@
+{
+  "_comment": "Verification profile. Mirror the project's CI here; checks run when a changed file matches `when` and no `unless`. Missing tools make a check UNAVAILABLE, never PASS. Changing this file needs a person's approval.",
+  "base": "origin/main",
+  "max_corrections": 3,
+  "ignore": ["\\.md$"],
+  "test_paths": ["(^|/)tests?/", "\\.test\\.[jt]sx?$", "(^|/)test_[^/]*\\.py$", "Test\\.kt$"],
+  "integrity_exclude": ["^\\.claude/", "^docs/"],
+  "checks": [
+    {"id": "integrity", "builtin": "integrity", "always": true},
+    {"id": "memory", "builtin": "memory", "always": true},
+    {"id": "dev-loop-lock", "builtin": "lock", "always": true},
+    {"id": "example-tests", "when": ["^src/"], "run": "echo replace with the project's test command", "requires": []}
+  ]
+}

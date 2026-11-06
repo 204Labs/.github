@@ -1,0 +1,5 @@
+{
+  "_comment": "Project additions to the dev-loop guard. Lists are added to the defaults in guard.py. Changing this file needs a person's approval.",
+  "extra_ask_bash": [],
+  "extra_deny_bash": []
+}
